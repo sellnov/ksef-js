@@ -1,5 +1,5 @@
 {
-    "name": "ksef-js",
+    "name": "@sellnov/ksef-js",
     "version": "0.1.0",
     "description": "Framework-agnostic library for accessing KSeF API 2.0",
     "type": "module",

@@ -4,6 +4,8 @@ import { SessionManager } from './SessionManager.js';
 import { InvoiceManager } from './InvoiceManager.js';
 import { CertificateManager } from './CertificateManager.js';
 import { PermissionManager } from './PermissionManager.js';
+import { BatchManager } from './BatchManager.js';
+import { LimitManager } from './LimitManager.js';
 
 /**
  * Main KSeF API Client.
@@ -16,54 +18,56 @@ export class KSeFClient {
     #invoices;
     #certificates;
     #permissions;
+    #batch;
+    #limits;
 
     /**
-     /**
-      * @param {object} config
-      * @param {string} [config.baseUrl] - API base URL (overrides test flag)
-      * @param {boolean} [config.test=true] - Use test environment if true, production if false
-      * @param {string} [config.token] - Access token for authentication
-      * @param {string} [config.nip] - NIP for automatic login
-      * @param {string} [config.ksefToken] - Raw KSeF token for automatic login
-      */
-     constructor(config = {}) {
-         const isTest = config.test !== false;
-         const defaultUrl = isTest ? 'https://api-test.ksef.mf.gov.pl/v2' : 'https://api.ksef.mf.gov.pl/v2';
+     * @param {object} config
+     * @param {string} [config.baseUrl] - API base URL (overrides test flag)
+     * @param {boolean} [config.test=true] - Use test environment if true, production if false
+     * @param {string} [config.token] - Access token for authentication
+     * @param {string} [config.nip] - NIP for automatic login
+     * @param {string} [config.ksefToken] - Raw KSeF token for automatic login
+     */
+    constructor(config = {}) {
+        const isTest = config.test !== false;
+        const defaultUrl = isTest ? 'https://api-test.ksef.mf.gov.pl/v2' : 'https://api.ksef.mf.gov.pl/v2';
 
-         this.#config = {
-             baseUrl: defaultUrl,
-             ...config,
-         };
+        this.#config = {
+            baseUrl: defaultUrl,
+            ...config,
+        };
 
-         this.#transport = axios.create({
-             baseURL: this.#config.baseUrl,
-             headers: {
-                 'Content-Type': 'application/json',
-                 Accept: 'application/json',
-             },
-         });
+        this.#transport = axios.create({
+            baseURL: this.#config.baseUrl,
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+        });
 
-         // Add error interceptor to extract KSeF specific error messages
-         this.#transport.interceptors.response.use(
-             (response) => response,
-             (error) => {
-                 const ksefError = error.response?.data?.exception;
-                 if (ksefError) {
-                     const msg = ksefError.exceptionDetailList
-                         ? `${ksefError.exceptionDescription}: ${ksefError.exceptionDetailList.map((d) => d.description).join(', ')}`
-                         : ksefError.exceptionDescription;
-                     error.message = `KSeF [${ksefError.exceptionCode}] ${msg}`;
-                 }
-                 return Promise.reject(error);
-             },
-         );
+        // Add error interceptor to extract KSeF specific error messages
+        this.#transport.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                const ksefError = error.response?.data?.exception;
+                if (ksefError) {
+                    const msg = ksefError.exceptionDetailList
+                        ? `${ksefError.exceptionDescription}: ${ksefError.exceptionDetailList.map((d) => d.description).join(', ')}`
+                        : ksefError.exceptionDescription;
+                    error.message = `KSeF [${ksefError.exceptionCode}] ${msg}`;
+                }
+                return Promise.reject(error);
+            },
+        );
 
-         this.#auth = new AuthManager(this.#transport);
-
+        this.#auth = new AuthManager(this.#transport);
         this.#sessions = new SessionManager(this.#transport);
         this.#invoices = new InvoiceManager(this.#transport);
         this.#certificates = new CertificateManager(this.#transport);
         this.#permissions = new PermissionManager(this.#transport);
+        this.#batch = new BatchManager(this.#transport);
+        this.#limits = new LimitManager(this.#transport);
 
         if (this.#config.token) {
             this.setToken(this.#config.token);
@@ -161,5 +165,21 @@ export class KSeFClient {
      */
     get permissions() {
         return this.#permissions;
+    }
+
+    /**
+     * Batch session manager.
+     * @returns {BatchManager}
+     */
+    get batch() {
+        return this.#batch;
+    }
+
+    /**
+     * Limits manager.
+     * @returns {LimitManager}
+     */
+    get limits() {
+        return this.#limits;
     }
 }

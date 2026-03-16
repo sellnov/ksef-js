@@ -1,4 +1,4 @@
-# KSeF-JS
+# @sellnov/ksef-js
 
 A modern, lightweight, and framework-agnostic JavaScript library for accessing the Polish National e-Invoice System (**KSeF**) API 2.0.
 
@@ -16,7 +16,7 @@ Built with **ES2025**, it follows a "no-bloat" philosophy, providing a surgical 
 ## Installation
 
 ```bash
-npm install ksef-js
+npm install @sellnov/ksef-js
 ```
 
 ## Quick Start (Token-based Authentication)
@@ -24,7 +24,7 @@ npm install ksef-js
 The easiest way to start is using your **NIP** and a **KSeF Token** generated in the portal. The library handles the complex encryption flow for you.
 
 ```javascript
-import { KSeFClient } from 'ksef-js';
+import { KSeFClient } from '@sellnov/ksef-js';
 
 const client = new KSeFClient({
     test: true,               // true for api-test, false for production
