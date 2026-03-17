@@ -1,1 +1,1 @@
-export { KSeFClient } from './KSeFClient.js';
+export { KSeFClient } from './KSeFClient';

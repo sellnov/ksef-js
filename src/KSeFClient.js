@@ -1,11 +1,11 @@
 import axios from 'axios';
-import { AuthManager } from './AuthManager.js';
-import { SessionManager } from './SessionManager.js';
-import { InvoiceManager } from './InvoiceManager.js';
-import { CertificateManager } from './CertificateManager.js';
-import { PermissionManager } from './PermissionManager.js';
-import { BatchManager } from './BatchManager.js';
-import { LimitManager } from './LimitManager.js';
+import { AuthManager } from './AuthManager';
+import { SessionManager } from './SessionManager';
+import { InvoiceManager } from './InvoiceManager';
+import { CertificateManager } from './CertificateManager';
+import { PermissionManager } from './PermissionManager';
+import { BatchManager } from './BatchManager';
+import { LimitManager } from './LimitManager';
 
 /**
  * Main KSeF API Client.
@@ -28,6 +28,7 @@ export class KSeFClient {
      * @param {string} [config.token] - Access token for authentication
      * @param {string} [config.nip] - NIP for automatic login
      * @param {string} [config.ksefToken] - Raw KSeF token for automatic login
+     * @param {string} [config.ksefTokenEncryptionCertificate] - Optional MF public certificate (Base64) for KsefTokenEncryption (skips fetching public keys)
      */
     constructor(config = {}) {
         const isTest = config.test !== false;
@@ -86,16 +87,21 @@ export class KSeFClient {
             throw new Error('NIP and Token are required for login.');
         }
 
-        // 1. Get MF public keys
-        const keys = await this.certificates.getPublicKeys();
-        const encryptionKey = keys.find((k) => k.usage.includes('KsefTokenEncryption'));
+        let certBase64 = this.#config.ksefTokenEncryptionCertificate;
 
-        if (!encryptionKey) {
-            throw new Error('Could not find MF public key for token encryption.');
+        if (!certBase64) {
+            // 1. Get MF public keys
+            const keys = await this.certificates.getPublicKeys();
+            const encryptionKey = keys.find((k) => k.usage.includes('KsefTokenEncryption'));
+
+            if (!encryptionKey) {
+                throw new Error('Could not find MF public key for token encryption.');
+            }
+            certBase64 = encryptionKey.certificate;
         }
 
         // 2. Perform login flow
-        const result = await this.auth.loginByToken(nip, token, encryptionKey.certificate);
+        const result = await this.auth.loginByToken(nip, token, certBase64);
 
         // 3. Set token in transport
         this.setToken(result.accessToken.token);
